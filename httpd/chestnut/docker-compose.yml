@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  http-seccomp:
+    image: http-chestnut-seccomp
+    container_name: http-chestnut-seccomp-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    # command: ["/opt/apache-seccomp/bin/apachectl", "-DFOREGROUND"]
+    command: ["bash"]
+    ports:
+      - 8083:80
+  http:
+    image: http-chestnut-normal
+    container_name: http-chestnut-normal-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["bash"]
+    ports:
+      - 8084:80

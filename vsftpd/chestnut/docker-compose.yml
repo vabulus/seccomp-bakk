@@ -1,0 +1,21 @@
+services:
+  vsftpd-vulnerable:
+    image: vsftpd-chestnut-normal
+    container_name: vsftpd-chestnut-normal-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]
+    ports:
+      - "2103:21"
+      - "6203:6200"
+  vsftpd-seccomp:
+    image: vsftpd-chestnut-seccomp
+    container_name: vsftpd-chestnut-seccomp-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]
+    ports:
+      - "2104:21"
+      - "6204:6200"

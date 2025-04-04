@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  http-seccomp:
+    image: http-sysfilter-seccomp
+    container_name: http-sysfilter-seccomp-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["bash"]
+    ports:
+      - 8080:80
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp=unconfined
+  http:
+    image: http-sysfilter-normal
+    container_name: http-sysfilter-normal-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    # command: ["/opt/apache/bin/apachectl", "-DFOREGROUND"]
+    command: ["bash"]
+    ports:
+      - 8081:80

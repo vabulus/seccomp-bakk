@@ -1,0 +1,4 @@
+24c24
+< 	$(CC) -o vsftpd $(OBJS) $(LINK) $(LIBS) $(LDFLAGS)
+---
+> 	$(CC) -o vsftpd $(OBJS) $(LINK) $(LIBS) $(LDFLAGS) -lcrypt -lseccomp

@@ -1,0 +1,10 @@
+159c159
+< 	#LoadModule cgid_module modules/mod_cgid.so
+---
+> 	LoadModule cgid_module modules/mod_cgid.so
+223,224c223,224
+<     AllowOverride none
+<     Require all denied
+---
+>     # AllowOverride none
+>     Require all granted

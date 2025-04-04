@@ -1,0 +1,21 @@
+services:
+  vsftpd-vulnerable:
+    image: vsftpd-sysfilter-normal
+    container_name: vsftpd-sysfilter-normal-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]
+    ports:
+      - "2100:21"
+      - "6200:6200"
+  vsftpd-seccomp:
+    image: vsftpd-sysfilter-seccomp
+    container_name: vsftpd-sysfilter-seccomp-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]
+    ports:
+      - "2101:21"
+      - "6201:6200"

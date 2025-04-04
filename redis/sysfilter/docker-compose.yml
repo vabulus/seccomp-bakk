@@ -1,0 +1,23 @@
+services:
+  redis-vulnerable:
+    image: redis-sysfilter-normal
+    container_name: redis-sysfilter-normal-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]
+    ports:
+      - "6379:6379"
+  redis-seccomp:
+    image: redis-sysfilter-seccomp
+    container_name: redis-sysfilter-seccomp-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]
+    ports:
+      - "6380:6379"
+    cap_add:
+      - SYSLOG
+    security_opt:
+      - seccomp=unconfined
