@@ -6,7 +6,23 @@ docker compose up -d
 ### Preparation
 
 _Extract the syscalls from the binary `httpd` into `/tmp/app.json`_
-`docker exec -it http-sysfilter-seccomp-container bash -c "/sysfilter/extraction/app/sysfilter_extract /opt/apache/bin/httpd -o /tmp/app.json"`
+
+```
+❯ docker exec -it http-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /opt/apache/bin/httpd -o /tmp/app.json"
+real	0m10.561s
+user	0m10.262s
+sys	0m0.264s
+
+❯ docker exec -it http-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /opt/apache/bin/httpd -o /tmp/app.json"
+real	0m10.716s
+user	0m10.411s
+sys	0m0.270s
+
+❯ docker exec -it http-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /opt/apache/bin/httpd -o /tmp/app.json"
+real	0m10.486s
+user	0m10.200s
+sys	0m0.253s
+```
 
 _Enforce the allowed syscalls for the binary `httpd`_
 `docker exec -it http-sysfilter-seccomp-container bash -c "/sysfilter/enforcement/sysfilter_enforce /opt/apache/bin/httpd /tmp/app.json"`

@@ -3,7 +3,26 @@
 ### Preperation
 
 _Extract the syscalls from the binary `redis-server` into `/tmp/app.json`_
-`docker exec -it redis-sysfilter-seccomp-container bash -c "/sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"`
+
+```
+❯ docker exec -it redis-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"
+
+real	0m17.434s
+user	0m16.664s
+sys	0m0.616s
+
+❯ docker exec -it redis-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"
+real	0m17.391s
+user	0m16.732s
+sys	0m0.604s
+
+❯ docker exec -it redis-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"
+real	0m16.925s
+user	0m16.306s
+sys	0m0.565s
+```
+
+````
 
 _Enforce the allowed syscalls for the binary `redis-server`_
 `docker exec -it redis-sysfilter-seccomp-container bash -c "/sysfilter/enforcement/sysfilter_enforce /usr/bin/redis-server /tmp/app.json"`
@@ -16,7 +35,7 @@ _Start the two container, one with the applied seccomp profile and one without:_
 # [...]
 ❯ docker exec -it vsftpd-sysfilter-normal-container  redis-server
 # 13:C 02 Apr 2025 11:07:56.029 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-```
+````
 
 ### Conduct the exploits
 
