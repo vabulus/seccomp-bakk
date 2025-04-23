@@ -1,4 +1,4 @@
-FROM chestnut-base
+FROM binalyzer-base
 
 RUN apt-get update -y && apt-get install -y \
   gcc \
@@ -26,4 +26,5 @@ RUN make install
 ADD http.conf.PATCH /tmp/
 RUN patch /opt/apache/conf/httpd.conf < /tmp/http.conf.PATCH
 
+WORKDIR /Chestnut/Binalyzer
 CMD ["/bin/bash"]
