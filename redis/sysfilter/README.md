@@ -1,41 +1,27 @@
 ## Redis – sysfilter
 
-### Preperation
+### Preparation
+
+#### System Calls Extraction
 
 _Extract the syscalls from the binary `redis-server` into `/tmp/app.json`_
 
-```
-❯ docker exec -it redis-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"
+`docker exec -it redis-sysfilter-seccomp-container bash -c "/sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"`
 
-real	0m17.434s
-user	0m16.664s
-sys	0m0.616s
-
-❯ docker exec -it redis-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"
-real	0m17.391s
-user	0m16.732s
-sys	0m0.604s
-
-❯ docker exec -it redis-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"
-real	0m16.925s
-user	0m16.306s
-sys	0m0.565s
-```
-
-````
+#### Seccomp Profile enforcement
 
 _Enforce the allowed syscalls for the binary `redis-server`_
+
 `docker exec -it redis-sysfilter-seccomp-container bash -c "/sysfilter/enforcement/sysfilter_enforce /usr/bin/redis-server /tmp/app.json"`
+
+#### Starting containers
 
 _Start the two container, one with the applied seccomp profile and one without:_
 
 ```bash
-❯ docker exec -it redis-sysfilter-seccomp-container redis-server
-# 66:C 02 Apr 2025 11:06:50.554 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-# [...]
-❯ docker exec -it vsftpd-sysfilter-normal-container  redis-server
-# 13:C 02 Apr 2025 11:07:56.029 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-````
+docker exec -it redis-sysfilter-seccomp-container redis-server
+docker exec -it redis-sysfilter-normal-container redis-server
+```
 
 ### Conduct the exploits
 
@@ -133,4 +119,25 @@ The last thing we check is, if the system call number `158` was in the applied s
 
 ```
 [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,19,20,21,22,24,25,28,32,33,38,39,41,42,43,44,45,46,47,48,49,50,51,52,54,55,56,59,60,61,62,63,72,73,74,75,76,77,79,80,81,82,83,84,85,87,89,90,96,98,99,102,104,105,106,109,112,113,114,116,117,119,131,142,143,144,145,146,147,157,186,201,202,203,204,213,217,218,228,230,231,232,233,234,257,262,273,277,292,293,302,307,309]
+```
+
+## Appendix
+
+The following shows the time needed to extract the system calls from 3 runs:
+
+```
+❯ docker exec -it redis-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"
+real	0m17.434s
+user	0m16.664s
+sys	0m0.616s
+
+❯ docker exec -it redis-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"
+real	0m17.391s
+user	0m16.732s
+sys	0m0.604s
+
+❯ docker exec -it redis-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /usr/bin/redis-server -o /tmp/app.json"
+real	0m16.925s
+user	0m16.306s
+sys	0m0.565s
 ```

@@ -2,26 +2,17 @@
 
 ### Preparation
 
-For the seccomp container we follow these steps, to create a policy for the `httpd` binary and apply it:
-
-1. Enter the seccomp container:
-   `docker exec -it redis-chestnut-seccomp-container bash`
-
-2. Run following commands inside the container. After executing `rewrite.sh` the binary will get executed:
+_For the container with seccomp, we execute the file `/tmp/script.sh` which is extracting the system calls from the binary `redis-server`, creating a seccomp-profile based on these detected system calls and subsequently applying the profile on the binary. Afterwards, the binary is automatically run._
 
 ```
-mkdir -p /Chestnut/Binalyzer/cached_results/
-sed -i 's/from cfg import cached_results_folder/cached_results_folder = "cached_results"/' /Chestnut/Binalyzer/syscalls.py
-cd /Chestnut/Binalyzer
-python3 /Chestnut/Binalyzer/syscalls.py /usr/bin/redis-server
-python3 /Chestnut/Binalyzer/policy.py /usr/bin/redis-server
-cp /Chestnut/Binalyzer/cached_results/policy__usr_bin_redis-server.json /Chestnut/ChestnutPatcher/
-cd /Chestnut/ChestnutPatcher && make
-/Chestnut/ChestnutPatcher/rewrite.sh /usr/bin/redis-server
+docker exec -it redis-chestnut-seccomp-container bash -c "source /Chestnut/Binalyzer/venv/bin/activate && /tmp/script.sh"
 ```
 
 For the container without seccomp, we just have to start it with following command:
-`docker exec -it vsftpd-chestnut-normal-container /app/vsftpd-2.3.4-infected/vsftpd /app/vsftpd-2.3.4-infected/vsftpd.conf`
+
+```
+docker exec -it redis-chestnut-normal-container redis-server
+```
 
 ### Conduct the exploits
 
@@ -37,13 +28,7 @@ _Seccomp_:
 
 ```bash
 (venv) root@516bf0d387cf:~# ./attack.sh whoami
-"root\n"
-(venv) root@516bf0d387cf:~# ./attack.sh id
-"uid=0(root) gid=0(root) groups=0(root)\n"
-(venv) root@516bf0d387cf:~# ./attack.sh ls
-"Makefile\ncJSON.c\ncJSON.h\ncJSON.o\ninject-lib.py\nlibchestnut.c\nlibchestnut.o\nlibchestnut.so\npolicy__usr_bin_redis-server.json\nrequirements.txt\nrewrite.sh\nsample-target\nsample-target.c\n"
-(venv) root@516bf0d387cf:~# ./attack.sh pwd
-"/Chestnut/ChestnutPatcher\n"
+^C # no response
 ```
 
 _Normal_:
@@ -61,12 +46,91 @@ _Normal_:
 
 ### Analysis
 
-Both containers are still vulnerable!
+As the exploit worked on the container without the seccomp profile, only the one with the enforced profile will be analysed.
 
-The used seccomp policy `policy__usr_bin_redis-server.json`:
+When starting the container with the command `strace -f /Chestnut/ChestnutPatcher/rewrite.sh /usr/bin/redis-server` we are able to see that the system call `pipe2` remains `<unfinished>` with the pid `199`.
 
 ```
-{"version": 1, "syscalls": [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 201, 202, 203, 204, 213, 216, 217, 218, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 240, 241, 242, 243, 244, 245, 247, 253, 254, 255, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 275, 276, 277, 278, 280, 281, 283, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 316, 318, 319, 322, 325, 326, 327, 328, 329, 330, 331, 332]}
+[pid   199] getpid()                    = 199
+[pid   199] openat(AT_FDCWD, 0x7fffffffd2b0, O_RDONLY) = 9
+[pid   199] read(9, 0x7fffffffd3b0, 4096) = 315
+[pid   199] close(9)                    = 0
+[pid   199] read(3, 0x7fffffffe477, 1)  = -1 EAGAIN (Resource temporarily unavailable)
+[pid   199] epoll_wait(5, 0x7ffff6f22200, 10128, 100) = 1
+[pid   199] read(8, 0x7ffff6f66f05, 16384) = 218
+[pid   199] openat(AT_FDCWD, 0x7ffff6e61af0, O_RDONLY|O_CLOEXEC) = 9
+[pid   199] read(9, 0x7fffffffd808, 832) = 832
+[pid   199] fstat(9, 0x7fffffffd6b0)    = 0
+[pid   199] close(9)                    = 0
+[pid   199] pipe2( <unfinished ...>)    = ?
+[pid   195] <... wait4 resumed>0x7fffffffe070, 0, NULL) = ? ERESTARTSYS (To be restarted if SA_RESTART is set)
+[pid   200] <... futex resumed>)        = ? ERESTARTSYS (To be restarted if SA_RESTART is set)
+[pid   195] --- SIGWINCH {si_signo=SIGWINCH, si_code=SI_KERNEL} ---
+[pid   200] --- SIGWINCH {si_signo=SIGWINCH, si_code=SI_KERNEL} ---
+[pid   195] wait4(-1,  <unfinished ...>
+[pid   200] futex(0x555555650408, FUTEX_WAIT_PRIVATE, 0, NULL
+
 ```
 
-No strace output, because the tested commands succeeded and nothing was blocked by seccomp.
+Further analysis on the host machine with the tool `ausearch` delievers us more insights.
+As we can see, the syscall with the number `293` was most probably the reason for the `<unfinished>` state of the system call.
+
+```
+time->Wed Apr 30 23:01:34 2025
+type=SECCOMP msg=audit(1746046894.641:3239): auid=4294967295 uid=0 gid=0 ses=4294967295 pid=140049 comm="redis-server_pa" exe="/usr/bin/redis-server_patched" sig=31 arch=c000003e syscall=293 compat=0 ip=0x7ffff75f6b7b code=0x0
+```
+
+We verify that the system call number `293` maps to ``with the`ausyscall` tool:
+
+```
+❯ ausyscall --dump | grep 293
+293	pipe2
+```
+
+The last thing we check is, if the system call number `293` was in the applied seccomp profile. The file `/Chestnut/ChestnutPatcher/policy__usr_bin_redis-server.json` shows no presence:
+
+```json
+{
+  "version": 1,
+  "syscalls": [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 24,
+    28, 32, 33, 36, 38, 39, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 54, 55,
+    56, 59, 60, 62, 63, 72, 73, 74, 75, 76, 77, 79, 80, 82, 83, 84, 85, 86, 87,
+    88, 89, 90, 91, 96, 98, 99, 102, 112, 125, 131, 137, 142, 144, 147, 157,
+    158, 164, 186, 201, 202, 203, 213, 217, 228, 230, 231, 232, 233, 234, 257,
+    262, 268, 273, 277, 280, 302, 309, 22
+  ]
+}
+```
+
+## Appendix
+
+The following shows the time needed to extract the system calls from 3 runs:
+
+```
+docker exec -it redis-chestnut-seccomp-container bash -c "rm /Chestnut/Binalyzer/cached_results/*; source /Chestnut/Binalyzer/venv/bin/activate && cd /Chestnut/Binalyzer && time python3 /Chestnut/Binalyzer/filter.py /usr/bin/redis-server"
+...
+real	1m21.029s
+user	1m18.301s
+sys	0m1.798s
+
+docker exec -it redis-chestnut-seccomp-container bash -c "rm /Chestnut/Binalyzer/cached_results/*; source /Chestnut/Binalyzer/venv/bin/activate && cd /Chestnut/Binalyzer && time python3 /Chestnut/Binalyzer/filter.py /usr/bin/redis-server"
+...
+real	1m19.806s
+user	1m17.710s
+sys	0m1.688s
+
+docker exec -it redis-chestnut-seccomp-container bash -c "rm /Chestnut/Binalyzer/cached_results/*; source /Chestnut/Binalyzer/venv/bin/activate && cd /Chestnut/Binalyzer && time python3 /Chestnut/Binalyzer/filter.py /usr/bin/redis-server"
+...
+real	1m19.500s
+user	1m17.354s
+sys	0m1.734s
+```
+
+Following system calls are not detected by chestnut, but needed for the application to start successfully, therefore we added these two to the seccomp-profile `/tmp/app.json`:
+
+- `22` (pipe)
+
+```
+sed -i '/"syscalls"/ s/\]/, 22]/' /Chestnut/ChestnutPatcher/policy__usr_bin_redis-server.json
+```
