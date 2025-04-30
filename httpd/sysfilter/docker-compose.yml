@@ -9,7 +9,7 @@ services:
     stdin_open: true
     command: ["bash"]
     ports:
-      - 8080:80
+      - 8081:80
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -23,4 +23,4 @@ services:
     # command: ["/opt/apache/bin/apachectl", "-DFOREGROUND"]
     command: ["bash"]
     ports:
-      - 8081:80
+      - 8082:80

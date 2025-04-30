@@ -2,23 +2,17 @@
 
 ### Preparation
 
-For the seccomp container we follow these steps, to create a policy for the `httpd` binary and apply it:
+_For the container with seccomp, we execute the file `/tmp/script.sh` which is extracting the system calls from the binary `httpd`, creating a seccomp-profile based on these detected system calls and subsequently applying the profile on the binary. Afterwards, the binary is automatically run._
 
-1. Enter the seccomp container:
-   `docker exec -it http-chestnut-seccomp-container "bash"`
-
-2. Run the `/tmp/script.sh` which is executing following commands. With the last command the binary will get executed:
-
-```
-cd /Chestnut/Binalyzer
-python3 /Chestnut/Binalyzer/filter.py /opt/apache/bin/httpd
-cp /Chestnut/Binalyzer/cached_results/policy__opt_apache_bin_httpd.json /Chestnut/ChestnutPatcher/
-cd /Chestnut/ChestnutPatcher && make
-/Chestnut/ChestnutPatcher/rewrite.sh /opt/apache/bin/httpd
+```bash
+docker exec -it http-chestnut-seccomp-container bash -c "source /Chestnut/Binalyzer/venv/bin/activate && /tmp/script.sh"
 ```
 
-For the container without seccomp, we just have to start it with following command:
-`docker exec -it http-chestnut-normal-container "/opt/apache/bin/httpd"`
+_For the container without seccomp, we just have to start it with following command:_
+
+```bash
+docker exec -it http-chestnut-normal-container "/opt/apache/bin/httpd"
+```
 
 ### Conduct the exploits
 
@@ -33,7 +27,7 @@ c4bb89d13ae4   http-chestnut-normal       "bash"        36 seconds ago   Up 35 s
 
 _Seccomp_:
 
-The attack on the container with the applied seccomp profile succeeds:
+The attack on the container with the applied seccomp profile fails:
 
 ```
 ❯ python3 exploit.py -u http://localhost:8083
@@ -43,6 +37,8 @@ The attack on the container with the applied seccomp profile succeeds:
 [+] Executing payload http://localhost:8083/cgi-bin/.%2e/%2e%2e/%2e%2e/%2e%2e/bin/sh
 [!] http://localhost:8083 is not vulnerable to CVE-2021-41773
 ```
+
+The attack on the container without the seccomp profile succeeds. We are able to run arbitrary commands:
 
 ```
 ❯ python3 exploit.py -u http://localhost:8084
@@ -99,9 +95,47 @@ The last thing we check is, if the system call number `108` was in the applied s
     82, 83, 84, 86, 87, 89, 90, 92, 93, 95, 96, 100, 102, 104, 105, 106, 107,
     110, 111, 112, 125, 128, 133, 142, 144, 147, 157, 158, 164, 186, 201, 202,
     229, 231, 232, 233, 234, 235, 257, 262, 288, 291, 292, 302, 318, 116, 22,
-    43, 273
+    43, 273, 116, 22, 43, 273, 95
   ]
 }
 ```
 
-TODO: add 116, 22, 43, 273, 95 syscalls
+## Appendix
+
+### Analysis Time
+
+The following shows the time needed to extract the system calls from 3 runs:
+
+```
+docker exec -it http-chestnut-seccomp-container bash -c "rm /Chestnut/Binalyzer/cached_results/*; source /Chestnut/Binalyzer/venv/bin/activate && cd /Chestnut/Binalyzer && time python3 /Chestnut/Binalyzer/filter.py /opt/apache/bin/httpd"
+...
+real	0m44.115s
+user	0m42.072s
+sys	0m1.782s
+
+docker exec -it http-chestnut-seccomp-container bash -c "rm /Chestnut/Binalyzer/cached_results/*; source /Chestnut/Binalyzer/venv/bin/activate && cd /Chestnut/Binalyzer && time python3 /Chestnut/Binalyzer/filter.py /opt/apache/bin/httpd"
+...
+real	0m43.806s
+user	0m42.204s
+sys	0m1.376s
+
+docker exec -it httpd-chestnut-seccomp-container bash -c "rm /Chestnut/Binalyzer/cached_results/*; source /Chestnut/Binalyzer/venv/bin/activate && cd /Chestnut/Binalyzer && time python3 /Chestnut/Binalyzer/filter.py /usr/bin/redis-server"
+...
+real	0m44.743s
+user	0m43.175s
+sys	0m1.337s
+```
+
+### Missing system calls
+
+Following system calls are not detected by chestnut, but needed for the application to start successfully, therefore we added these two to the seccomp-profile `/tmp/app.json`:
+
+- 22 (pipe)
+- 43 (accept)
+- 95 (umask)
+- 116 (setgroups)
+- 273 (set_robust_list)
+
+```
+sed -i '/"syscalls"/ s/\]/, 22, 43, 95, 116, 273]/' /Chestnut/ChestnutPatcher/policy__opt_apache_bin_httpd.json
+```
