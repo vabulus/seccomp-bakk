@@ -2,13 +2,22 @@
 
 ### Preparation
 
+#### System Calls Extraction
+
 _Extract the syscalls from the binary `vsftpd` into `/tmp/app.json`_
+
 `docker exec -it vsftpd-sysfilter-seccomp-container bash -c "/sysfilter/extraction/app/sysfilter_extract /app/vsftpd-2.3.4-infected/vsftpd -o /tmp/app.json"`
 
+#### Seccomp Profile enforcement
+
 _Enforce the allowed syscalls for the binary `vsftpd`_
+
 `docker exec -it vsftpd-sysfilter-seccomp-container bash -c "/sysfilter/enforcement/sysfilter_enforce /app/vsftpd-2.3.4-infected/vsftpd /tmp/app.json"`
 
+#### Starting containers
+
 _Start the two container, one with the applied seccomp profile and one without:_
+
 `docker exec -it vsftpd-sysfilter-normal-container /app/vsftpd-2.3.4-infected/vsftpd /app/vsftpd-2.3.4-infected/vsftpd.conf`
 `docker exec -it vsftpd-sysfilter-seccomp-container /app/vsftpd-2.3.4-infected/vsftpd /app/vsftpd-2.3.4-infected/vsftpd.conf`
 
@@ -120,4 +129,25 @@ The last thing we check is, if the system call number `158` was in the applied s
 
 ```
 [0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,23,24,25,28,32,33,35,37,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,59,60,61,62,63,72,77,78,79,80,82,83,84,87,89,90,91,93,95,96,99,102,105,106,107,108,111,112,113,114,115,116,126,132,157,161,186,201,202,228,229,231,234,257,262,302,307]
+```
+
+## Appendix
+
+The following shows the time needed to extract the system calls from 3 runs:
+
+```
+❯ docker exec -it vsftpd-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /app/vsftpd-2.3.4-infected/vsftpd -o /tmp/app.json"
+real	0m5.557s
+user	0m5.326s
+sys	0m0.147s
+
+❯ docker exec -it vsftpd-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /app/vsftpd-2.3.4-infected/vsftpd -o /tmp/app.json"
+real	0m5.250s
+user	0m5.105s
+sys	0m0.121s
+
+❯ docker exec -it vsftpd-sysfilter-seccomp-container bash -c "time /sysfilter/extraction/app/sysfilter_extract /app/vsftpd-2.3.4-infected/vsftpd -o /tmp/app.json"
+real	0m5.481s
+user	0m5.332s
+sys	0m0.122s
 ```

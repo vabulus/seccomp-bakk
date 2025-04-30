@@ -1,4 +1,4 @@
-FROM chestnut-base
+FROM binalyzer-base
 
 RUN apt-get update -y && apt-get install -y \
   gcc \
@@ -6,9 +6,7 @@ RUN apt-get update -y && apt-get install -y \
   vim \
   build-essential \
   libseccomp-dev \
-  python3 \
-  iproute2 \
-  python3-pip
+  iproute2
 
 
 RUN adduser ftp
@@ -25,6 +23,12 @@ WORKDIR /app/vsftpd-2.3.4-infected
 RUN patch Makefile Makefile.PATCH
 
 RUN make
+
+ADD script.sh /tmp/script.sh
+RUN chmod +x /tmp/script.sh
+
+ADD rewrite.sh /Chestnut/ChestnutPatcher
+RUN chmod +x /Chestnut/ChestnutPatcher/rewrite.sh
 
 CMD ["/bin/bash"]
 

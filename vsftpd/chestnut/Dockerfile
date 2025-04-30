@@ -1,4 +1,4 @@
-FROM chestnut-base
+FROM binalyzer-base
 
 RUN apt-get update -y && apt-get install -y \
   gcc \
@@ -24,6 +24,11 @@ WORKDIR /app/vsftpd-2.3.4-infected
 RUN patch Makefile Makefile.PATCH
 
 RUN make
+
+ADD script.sh /tmp/script.sh
+RUN chmod +x /tmp/script.sh
+
+# RUN /tmp/script.sh
 
 CMD ["/bin/bash"]
 
