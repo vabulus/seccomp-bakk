@@ -126,6 +126,8 @@ user	0m43.175s
 sys	0m1.337s
 ```
 
+(44,115+43,806+44,743)/3=44,221
+
 ### Missing system calls
 
 Following system calls are not detected by chestnut, but needed for the application to start successfully, therefore we added these five to the seccomp-profile `/tmp/app.json`:
@@ -138,4 +140,22 @@ Following system calls are not detected by chestnut, but needed for the applicat
 
 ```
 sed -i '/"syscalls"/ s/\]/, 22, 43, 95, 116, 273]/' /Chestnut/ChestnutPatcher/policy__opt_apache_bin_httpd.json
+```
+
+### Number of syscalls
+
+```bash
+echo '{
+  "version": 1,
+  "syscalls": [
+    0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 23, 24,
+    28, 29, 30, 31, 32, 33, 35, 38, 39, 41, 42, 44, 45, 47, 48, 49, 50, 51, 52,
+    54, 55, 56, 59, 60, 61, 62, 63, 64, 65, 66, 67, 72, 73, 74, 75, 78, 79, 80,
+    82, 83, 84, 86, 87, 89, 90, 92, 93, 95, 96, 100, 102, 104, 105, 106, 107,
+    110, 111, 112, 125, 128, 133, 142, 144, 147, 157, 158, 164, 186, 201, 202,
+    229, 231, 232, 233, 234, 235, 257, 262, 288, 291, 292, 302, 318, 116, 22,
+    43, 273
+  ]
+}' | jq -r '.syscalls | length'
+108
 ```

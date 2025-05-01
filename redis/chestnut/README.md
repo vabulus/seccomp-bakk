@@ -105,6 +105,8 @@ The last thing we check is, if the system call number `293` was in the applied s
 
 ## Appendix
 
+### Extraction time
+
 The following shows the time needed to extract the system calls from 3 runs:
 
 ```
@@ -127,10 +129,31 @@ user	1m17.354s
 sys	0m1.734s
 ```
 
+(71,029+69,806+69,500)/3=70,111
+
+### Missing system calls
+
 Following system calls are not detected by chestnut, but needed for the application to start successfully, therefore we added these two to the seccomp-profile `/tmp/app.json`:
 
 - `22` (pipe)
 
 ```
 sed -i '/"syscalls"/ s/\]/, 22]/' /Chestnut/ChestnutPatcher/policy__usr_bin_redis-server.json
+```
+
+### Number of syscalls
+
+```
+echo '{
+  "version": 1,
+  "syscalls": [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 24,
+    28, 32, 33, 36, 38, 39, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 54, 55,
+    56, 59, 60, 62, 63, 72, 73, 74, 75, 76, 77, 79, 80, 82, 83, 84, 85, 86, 87,
+    88, 89, 90, 91, 96, 98, 99, 102, 112, 125, 131, 137, 142, 144, 147, 157,
+    158, 164, 186, 201, 202, 203, 213, 217, 228, 230, 231, 232, 233, 234, 257,
+    262, 268, 273, 277, 280, 302, 309
+  ]
+}' | jq -r '.syscalls | length'
+97
 ```

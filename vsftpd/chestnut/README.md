@@ -134,6 +134,8 @@ The last thing we check is, if the system call numbers `104` and `61` was in the
 
 ## Appendix
 
+### Extraction time
+
 The following shows the time needed to extract the system calls from 3 runs:
 
 ```
@@ -154,4 +156,13 @@ docker exec -it vsftpd-chestnut-seccomp-container bash -c "rm /Chestnut/Binalyze
 real	0m27.484s
 user	0m26.194s
 sys	0m1.140s
+```
+
+`(26,930+28,045+27,484)/3=27.486`
+
+### Number of syscalls
+
+```
+jq -r '.syscalls | length'
+83
 ```

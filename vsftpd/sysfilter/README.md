@@ -133,6 +133,8 @@ The last thing we check is, if the system call number `158` was in the applied s
 
 ## Appendix
 
+### Extraction time
+
 The following shows the time needed to extract the system calls from 3 runs:
 
 ```
@@ -151,3 +153,5 @@ real	0m5.481s
 user	0m5.332s
 sys	0m0.122s
 ```
+
+`(5,557+5,250+5,481)/3=5,429`

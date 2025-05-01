@@ -129,6 +129,8 @@ user 0m10.200s
 sys 0m0.253s
 ```
 
+(10,561+10,716+10,486)/3=10,587
+
 ### Missing system calls
 
 Following system calls are not detected by sysfilter, but needed for the application to start successfully, therefore we added these two to the seccomp-profile `/tmp/app.json`:
@@ -138,4 +140,11 @@ Following system calls are not detected by sysfilter, but needed for the applica
 
 ```
 sed -i '0,/\]/s/\]/,92,95]/' /tmp/app.json
+```
+
+### Number of syscalls
+
+```
+python -c 'print(len([0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,22,23,24,25,28,29,30,31,32,33,34,35,39,40,41,42,43,44,45,46,47,48,49,50,51,52,54,56,58,59,60,61,62,63,64,65,66,67,72,73,78,79,80,82,83,86,87,90,93,96,99,100,102,104,105,106,107,108,111,112,113,114,115,116,117,119,121,128,137,143,144,145,146,147,186,201,202,203,218,228,229,231,232,233,234,257,262,273,288,291,292,302,307]))'
+113
 ```
