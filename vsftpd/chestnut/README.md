@@ -75,53 +75,49 @@ uid=0(root) gid=0(root) groups=0(root)
 
 As the exploit worked on the container without the seccomp profile, only the one with the enforced profile will be analysed.
 
-TODO: PIDS AUSTAUSCHEN!!!!!!!!!!!!
 _strace output:_
-When starting the container with the command `strace -f /tool/Chestnut/ChestnutPatcher/rewrite.sh /app/vsftpd-2.3.4-infected/vsftpd /app/vsftpd-2.3.4-infected/vsftpd.conf` we are able to see that just before the process with the pid `299` was killed with the signal `SIGSYS`, the system call `set_tid_address` was executed.
+When starting the container with the command `strace -f /tool/Chestnut/ChestnutPatcher/rewrite.sh /app/vsftpd-2.3.4-infected/vsftpd /app/vsftpd-2.3.4-infected/vsftpd.conf` we are able to see that just before the process with the pid `88` was killed with the signal `SIGSYS`, the system call `wait4` was executed.
+In addition, pid `89` executed `getgid` and was also with `SIGSYS`.
 
 ```
-[{WIFSIGNALED(s) && WTERMSIG(s) == SIGSYS}], 0, NULL) = 145
-rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x72e15fa61f10}, {sa_handler=0x5c804dc54160, sa_mask=[], sa_flags=SA_RESTORER, sa_restorer=0x72e15fa61f10}, 8) = 0
-fstat(2, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 1), ...}) = 0
-write(2, "/Chestnut/ChestnutPatcher/rewrit"..., 116/Chestnut/ChestnutPatcher/rewrite.sh: line 6:   145 Bad system call         LD_LIBRARY_PATH=. "${BIN}_patched" "$@"
-) = 116
-rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
---- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_KILLED, si_pid=145, si_uid=0, si_status=SIGSYS, si_utime=0, si_stime=0} ---
-wait4(-1, 0x7ffcaeb35910, WNOHANG, NULL) = -1 ECHILD (No child processes)
-rt_sigreturn({mask=[]})                 = 0
-read(255, "", 107)                      = 0
-rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
-rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
-exit_group(159)                         = ?
-+++ exited with 159 +++
+[pid    88] alarm(0 <unfinished ...>
+[pid    88] <... alarm resumed> )       = 1
+[pid    88] wait4(-1,  <unfinished ...>
+[pid    88] <... wait4 resumed> NULL, WNOHANG, NULL) = 61
+[pid    88] +++ killed by SIGSYS +++
+...
+[pid    89] mprotect(0x5b5ee881b000, 8192, PROT_READ) = 0
+[pid    89] mprotect(0x7d22d1047000, 4096, PROT_READ) = 0
+[pid    89] munmap(0x7d22d103c000, 17328) = 0
+[pid    89] getuid()                    = 0
+[pid    89] getgid()                    = 104
+[pid    89] +++ killed by SIGSYS (core dumped) +++
 ```
 
 Further analysis on the host machine with the tool `ausearch` delievers us more insights.
-As we can see, the syscalls with the number `31` and `61` were the reason for the `SIGSYS` signal.
+As we can see, the syscalls with the number `104` and `61` were the reason for the `SIGSYS` signal.
 
 ```
 ----
-# ls command
-time->Mon Apr 28 15:14:41 2025
-type=SECCOMP msg=audit(1745846081.780:2415): auid=4294967295 uid=0 gid=0 ses=4294967295 pid=69785 comm="sh" exe="/bin/dash" sig=31 arch=c000003e syscall=104 compat=0 ip=0x707dcf3a2857 code=0x0
+# whoami command
+time->Thu May  1 09:04:26 2025
+type=SECCOMP msg=audit(1746083066.494:1450): auid=4294967295 uid=0 gid=0 ses=4294967295 pid=22798 comm="sh" exe="/bin/dash" sig=31 arch=c000003e syscall=104 compat=0 ip=0x7d22d0b12857 code=0x0
 ----
-time->Mon Apr 28 15:14:41 2025
-type=SECCOMP msg=audit(1745846081.876:2421): auid=4294967295 uid=0 gid=0 ses=4294967295 pid=69675 comm="vsftpd_patched" exe="/app/vsftpd-2.3.4-infected/vsftpd_patched" sig=31 arch=c000003e syscall=61 compat=0 ip=0x7af4847b2337 code=0x0
-
-
+time->Thu May  1 09:04:26 2025
+type=SECCOMP msg=audit(1746083066.590:1456): auid=4294967295 uid=0 gid=0 ses=4294967295 pid=22711 comm="vsftpd_patched" exe="/app/vsftpd-2.3.4-infected/vsftpd_patched" sig=31 arch=c000003e syscall=61 compat=0 ip=0x7acc6eeb6337 code=0x0
 ```
 
-We verify that the system call number `218` maps to `set_tid_address` with the `ausyscall` tool:
+We verify that the system call numbers `104` and `61` map to `getgid` and `wait4` with the `ausyscall` tool:
 
 ```
-❯ ausyscall --dump | grep 31
-31	shmctl
+❯ ausyscall --dump | grep 104
+104	getgid
 
 ❯ ausyscall --dump | grep 61
 61	wait4
 ```
 
-The last thing we check is, if the system call numbers `31` and `61` was in the applied seccomp profile. The file `policy__app_vsftpd-2.3.4-infected_vsftpd.json` shows no presence:
+The last thing we check is, if the system call numbers `104` and `61` was in the applied seccomp profile. The file `policy__app_vsftpd-2.3.4-infected_vsftpd.json` shows no presence:
 
 ```json
 {

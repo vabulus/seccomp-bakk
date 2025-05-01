@@ -119,7 +119,7 @@ real	0m43.806s
 user	0m42.204s
 sys	0m1.376s
 
-docker exec -it httpd-chestnut-seccomp-container bash -c "rm /Chestnut/Binalyzer/cached_results/*; source /Chestnut/Binalyzer/venv/bin/activate && cd /Chestnut/Binalyzer && time python3 /Chestnut/Binalyzer/filter.py /usr/bin/redis-server"
+docker exec -it http-chestnut-seccomp-container bash -c "rm /Chestnut/Binalyzer/cached_results/*; source /Chestnut/Binalyzer/venv/bin/activate && cd /Chestnut/Binalyzer && time python3 /Chestnut/Binalyzer/filter.py /opt/apache/bin/httpd"
 ...
 real	0m44.743s
 user	0m43.175s
@@ -128,7 +128,7 @@ sys	0m1.337s
 
 ### Missing system calls
 
-Following system calls are not detected by chestnut, but needed for the application to start successfully, therefore we added these two to the seccomp-profile `/tmp/app.json`:
+Following system calls are not detected by chestnut, but needed for the application to start successfully, therefore we added these five to the seccomp-profile `/tmp/app.json`:
 
 - 22 (pipe)
 - 43 (accept)

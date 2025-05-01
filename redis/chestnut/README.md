@@ -80,7 +80,7 @@ time->Wed Apr 30 23:01:34 2025
 type=SECCOMP msg=audit(1746046894.641:3239): auid=4294967295 uid=0 gid=0 ses=4294967295 pid=140049 comm="redis-server_pa" exe="/usr/bin/redis-server_patched" sig=31 arch=c000003e syscall=293 compat=0 ip=0x7ffff75f6b7b code=0x0
 ```
 
-We verify that the system call number `293` maps to ``with the`ausyscall` tool:
+We verify that the system call number `293` maps to `pipe2` with the`ausyscall` tool:
 
 ```
 ❯ ausyscall --dump | grep 293

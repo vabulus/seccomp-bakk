@@ -34,8 +34,8 @@ First, we verify the IP addresses of the container, to ensure we target the righ
 ```
 ❯ docker ps
 CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
-9065cb90a62b http-sysfilter-seccomp "bash" 8 minutes ago Up 8 minutes 0.0.0.0:8080->80/tcp, [::]:8080->80/tcp http-sysfilter-seccomp-container
-4e1fa8b2fe0f http-sysfilter-normal "bash" 8 minutes ago Up 8 minutes 0.0.0.0:8081->80/tcp, [::]:8081->80/tcp http-sysfilter-normal-container
+9065cb90a62b http-sysfilter-seccomp "bash" 8 minutes ago Up 8 minutes 0.0.0.0:8081->80/tcp, [::]:8081->80/tcp http-sysfilter-seccomp-container
+4e1fa8b2fe0f http-sysfilter-normal "bash" 8 minutes ago Up 8 minutes 0.0.0.0:8082->80/tcp, [::]:8082->80/tcp http-sysfilter-normal-container
 ```
 
 _Seccomp_
@@ -54,13 +54,12 @@ The attack on the container without the seccomp profile succeeds. We are able to
 ```
 ❯ python3 exploit.py -u http://localhost:8082
 [+] Executing payload http://localhost:8082/icons/.%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd
-[!] http://localhost:8081 is not vulnerable to CVE-2021-41773
+[!] http://localhost:8082 is not vulnerable to CVE-2021-41773
 
 [+] Executing payload http://localhost:8082/cgi-bin/.%2e/%2e%2e/%2e%2e/%2e%2e/bin/sh
 [!] http://localhost:8082 is vulnerable to Remote Code Execution attack (CVE-2021-41773)
 [+] Response:
 uid=1(daemon) gid=1(daemon) groups=1(daemon)
-
 ```
 
 ### Analysis
@@ -68,24 +67,30 @@ uid=1(daemon) gid=1(daemon) groups=1(daemon)
 As the exploit worked on the container without the seccomp profile, only the one with the enforced profile will be analysed.
 
 _strace output:_
-When starting the container with the command `strace -f /opt/apache/bin/httpd` we are able to see that just before the process with the pid `947` was killed with the signal `SIGSYS`, the system call `arch_prctl` was executed.
+When starting the container with the command `strace -f /opt/apache/bin/httpd` we are able to see that just before the process with the pid `677` was killed with the signal `SIGSYS`, the system call `arch_prctl` was executed.
 
 ```
 ...
-[pid   947] mmap(0x78928326b000, 15072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x78928326b000
-[pid   947] close(3)                    = 0
-[pid   947] arch_prctl(ARCH_SET_FS, 0x78928348b540) = 158
-[pid   947] +++ killed by SIGSYS (core dumped) +++
+[pid   677] openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+[pid   677] read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\240\35\2\0\0\0\0\0"..., 832) = 832
+[pid   677] fstat(3, {st_mode=S_IFREG|0755, st_size=2030928, ...}) = 0
+[pid   677] mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ae557cea000
+[pid   677] mmap(NULL, 4131552, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ae5576de000
+[pid   677] mprotect(0x7ae5578c5000, 2097152, PROT_NONE) = 0
+[pid   677] mmap(0x7ae557ac5000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1e7000) = 0x7ae557ac5000
+[pid   677] mmap(0x7ae557acb000, 15072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ae557acb000
+[pid   677] close(3)                    = 0
+[pid   677] arch_prctl(ARCH_SET_FS, 0x7ae557ceb540) = 158
+[pid   677] +++ killed by SIGSYS (core dumped) +++
 ```
 
 Further analysis on the host machine with the tool `ausearch` delievers us more insights.
 As we can see, the syscall with the number `158` was indeed blocked by seccomp
 
 ```
-
 ❯ sudo ausearch -m seccomp --start today
-time->Mon Apr 28 15:54:48 2025
-type=SECCOMP msg=audit(1743672798.369:1358): auid=4294967295 uid=0 gid=0 ses=4294967295 pid=27571 comm="httpd" exe="/opt/apache/bin/httpd" sig=31 arch=c000003e syscall=95 compat=0 ip=0x7e38d7f2fa67 code=0x0
+time->Thu May  1 08:47:35 2025
+type=SECCOMP msg=audit(1746082055.774:1337): auid=4294967295 uid=1 gid=1 ses=4294967295 pid=15656 comm="sh" exe="/bin/dash" sig=31 arch=c000003e syscall=158 compat=0 ip=0x7a2ca4acb024 code=0x0
 ```
 
 We verify that the system call number `158` maps to `arch_prctl` with the `ausyscall` tool:
@@ -128,8 +133,8 @@ sys 0m0.253s
 
 Following system calls are not detected by sysfilter, but needed for the application to start successfully, therefore we added these two to the seccomp-profile `/tmp/app.json`:
 
-- 92 (chown)
-- 95 (umask)
+- `92` (chown)
+- `95` (umask)
 
 ```
 sed -i '0,/\]/s/\]/,92,95]/' /tmp/app.json
