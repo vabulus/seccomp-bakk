@@ -31,8 +31,6 @@ The structure of an application directory is following. In each folder are the t
   │ └── ...
 ```
 
-## Test methodolgy
-
 ## Installation
 
 Host: 6.14.3-arch1-1
