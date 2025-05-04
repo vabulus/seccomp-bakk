@@ -1,0 +1,19 @@
+services:
+  custom-vulnerable:
+    image: custom-chestnut-normal
+    container_name: custom-chestnut-normal-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]
+  custom-seccomp:
+    image: custom-chestnut-seccomp
+    container_name: custom-chestnut-seccomp-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]
+    cap_add:
+      - SYSLOG
+    security_opt:
+      - seccomp=unconfined

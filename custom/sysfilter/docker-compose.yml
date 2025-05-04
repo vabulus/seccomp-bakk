@@ -1,0 +1,19 @@
+services:
+  custom-vulnerable:
+    image: custom-sysfilter-normal
+    container_name: custom-sysfilter-normal-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]
+  custom-seccomp:
+    image: custom-sysfilter-seccomp
+    container_name: custom-sysfilter-seccomp-container
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    command: ["/bin/bash"]
+    cap_add:
+      - SYSLOG
+    security_opt:
+      - seccomp=unconfined
