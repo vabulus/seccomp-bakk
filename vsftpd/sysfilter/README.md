@@ -155,3 +155,32 @@ sys	0m0.122s
 ```
 
 `(5,557+5,250+5,481)/3=5,429`
+
+### Number of syscalls
+
+```
+python3 -c "print(len([0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,23,24,25,28,32,33,35,37,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,59,60,61,62,63,72,77,78,79,80,82,83,84,87,89,90,91,93,95,96,99,102,105,106,107,108,111,112,113,114,115,116,126,132,157,161,186,201,202,228,229,231,234,257,262,302,307]))"
+93
+```
+
+### Alternate scenario + 158
+
+The following shows what happens, if the system call `158` is added by hand to the seccomp policy.
+The exploit still fails. Now the system call `getgid` is blocked.
+
+```
+time->Sun May  4 10:25:49 2025
+type=SECCOMP msg=audit(1746347149.529:1244): auid=4294967295 uid=0 gid=0 ses=4294967295 pid=58826 comm="sh" exe="/bin/dash" sig=31 arch=c000003e syscall=104 compat=0 ip=0x76e4d8eaf857 code=0x0
+```
+
+```
+❯ ausyscall --dump | grep 104
+104	getgid
+```
+
+```
+[pid   154] getuid()                    = 0
+[pid   154] getgid()                    = 104
+[pid   155] <... read resumed> <unfinished ...>) = ?
+[pid   155] +++ killed by SIGKILL +++
+```
