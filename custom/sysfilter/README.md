@@ -150,7 +150,7 @@ We verify that the system call number `218` maps to `set_tid_address` with the `
 The last thing we check is, if the system call number `218` was in the applied seccomp profile. The file `/tmp/app.json` shows no presence:
 
 ```
-[0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,20,24,25,28,32,39,41,42,44,45,47,49,51,54,59,60,62,72,78,79,96,99,186,201,202,228,229,231,234,257,262,302]
+[0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,20,24,25,28,32,39,41,42,44,45,47,49,51,54,59,60,62,72,78,79,96,99,186,201,202,228,229,231,234,257,262,302,21,158,221]
 ```
 
 ## Appendix
