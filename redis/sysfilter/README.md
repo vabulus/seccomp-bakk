@@ -72,21 +72,11 @@ When starting the container with the command `strace -f redis-server` we are abl
 
 ```
 [pid 172] execve("/bin/sh", ["sh", "-c", "ls"], 0x75c17042f000 /_ 11 vars _/ <unfinished ...>
-[pid 165] <... clone resumed>) = 172
-[pid 165] munmap(0x75c170969000, 36864) = 0
-[pid 165] rt*sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
-[pid 165] close(10 <unfinished ...>
 [pid 172] <... execve resumed>) = 0
-[pid 165] <... close resumed>) = 0
-[pid 165] fcntl(9, F_SETFD, 0) = 0
 [pid 172] brk(NULL <unfinished ...>
-[pid 165] fstat(9, <unfinished ...>
 [pid 172] <... brk resumed>) = 0x5c564f124000
-[pid 165] <... fstat resumed>{st_mode=S_IFIFO|0600, st_size=0, ...}) = 0
 [pid 172] arch_prctl(0x3001 /\* ARCH*??? \*/, 0x7ffe17c42740 <unfinished ...>
-[pid 165] read(9, <unfinished ...>
 [pid 172] <... arch_prctl resumed>) = 158
-[pid 165] <... read resumed>"", 4096) = 0
 [pid 172] +++ killed by SIGSYS (core dumped) +++
 ```
 
@@ -143,6 +133,8 @@ real	0m16.925s
 user	0m16.306s
 sys	0m0.565s
 ```
+
+`(17,434 + 17,391 + 16,925) / 3 = 17,25 Sekunden`
 
 ### Number of syscalls
 
